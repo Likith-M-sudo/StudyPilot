@@ -1,0 +1,12 @@
+{
+  "name": "studypilot",
+  "version": "1.0.0",
+  "description": "Adaptive study planner: turns exam dates, topics and energy level into a day-by-day plan that re-plans when you fall behind.",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "test": "node --test",
+    "start": "python3 -m http.server 8000"
+  },
+  "engines": { "node": ">=18" }
+}

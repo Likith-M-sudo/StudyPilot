@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; base-uri 'none'; form-action 'none'">
+  <meta name="description" content="StudyPilot turns your exam dates, topics and energy level into a day-by-day study plan that adapts when life gets in the way.">
+  <title>StudyPilot: adaptive study planner</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2314213D'/%3E%3Cpath d='M8 21l8-12 8 12z' fill='%23FFD84D'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to main content</a>
+
+  <header class="site-header">
+    <div class="wrap">
+      <h1>StudyPilot</h1>
+      <p class="tagline">Tell it what you have to study and how you feel today. It builds a plan, explains every choice, and re-plans when you fall behind.</p>
+    </div>
+  </header>
+
+  <main id="main" class="wrap layout">
+    <div class="column setup">
+      <section aria-labelledby="settings-heading" class="panel">
+        <h2 id="settings-heading">Your day</h2>
+        <form id="settings-form" novalidate>
+          <div class="field">
+            <label for="hours">Study hours available each day</label>
+            <input id="hours" name="hours" type="number" inputmode="decimal" min="0.5" max="12" step="0.5" value="3" required aria-describedby="hours-hint">
+            <p id="hours-hint" class="hint">Between 0.5 and 12, in steps of half an hour.</p>
+          </div>
+          <fieldset class="field energy">
+            <legend>How is your energy right now?</legend>
+            <label class="choice"><input type="radio" name="energy" value="low"> Low</label>
+            <label class="choice"><input type="radio" name="energy" value="medium" checked> Medium</label>
+            <label class="choice"><input type="radio" name="energy" value="high"> High</label>
+          </fieldset>
+          <p id="settings-errors" class="errors" role="alert"></p>
+        </form>
+      </section>
+
+      <section aria-labelledby="topic-heading" class="panel">
+        <h2 id="topic-heading">Add a topic</h2>
+        <form id="topic-form" novalidate>
+          <div class="field">
+            <label for="topic-name">Topic or subject</label>
+            <input id="topic-name" name="name" type="text" maxlength="40" autocomplete="off" required aria-describedby="name-hint">
+            <p id="name-hint" class="hint">For example: Operating Systems, Unit 3.</p>
+          </div>
+          <div class="field">
+            <label for="topic-days">Days until its exam</label>
+            <input id="topic-days" name="daysLeft" type="number" inputmode="numeric" min="1" max="30" step="1" required aria-describedby="days-hint">
+            <p id="days-hint" class="hint">1 means tomorrow. Today counts as day 0.</p>
+          </div>
+          <div class="field">
+            <label for="topic-difficulty">How hard is it?</label>
+            <select id="topic-difficulty" name="difficulty" required>
+              <option value="1">1: Very easy</option>
+              <option value="2">2: Easy</option>
+              <option value="3" selected>3: Moderate</option>
+              <option value="4">4: Hard</option>
+              <option value="5">5: Very hard</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="topic-confidence">How confident are you?</label>
+            <select id="topic-confidence" name="confidence" required>
+              <option value="1">1: Lost</option>
+              <option value="2">2: Shaky</option>
+              <option value="3" selected>3: Okay</option>
+              <option value="4">4: Good</option>
+              <option value="5">5: Very confident</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="topic-importance">How much is it worth in the exam?</label>
+            <select id="topic-importance" name="importance" required>
+              <option value="1">1: Very little</option>
+              <option value="2">2: Little</option>
+              <option value="3" selected>3: Average</option>
+              <option value="4">4: A lot</option>
+              <option value="5">5: Most of the marks</option>
+            </select>
+          </div>
+          <p id="topic-errors" class="errors" role="alert"></p>
+          <button type="submit" class="btn secondary">Add topic</button>
+        </form>
+      </section>
+
+      <section aria-labelledby="list-heading" class="panel">
+        <h2 id="list-heading">Your topics</h2>
+        <p id="empty-topics" class="empty">No topics yet. Add one above, or load an example to see how it works.</p>
+        <ul id="topic-list" class="topic-list"></ul>
+        <div class="actions">
+          <button type="button" id="build-btn" class="btn primary">Build my plan</button>
+          <button type="button" id="example-btn" class="btn secondary">Load example</button>
+          <button type="button" id="clear-btn" class="btn quiet">Clear all</button>
+        </div>
+      </section>
+    </div>
+
+    <div class="column results">
+      <p id="status" class="status" role="status" aria-live="polite"></p>
+
+      <section id="results" aria-labelledby="results-heading" hidden>
+        <h2 id="results-heading" tabindex="-1">Your plan</h2>
+
+        <article id="now-card" class="now-card" aria-labelledby="now-heading">
+          <h3 id="now-heading">Study this now</h3>
+          <p id="now-topic" class="now-topic"></p>
+          <p id="now-detail" class="now-detail"></p>
+          <p id="now-why" class="now-why"></p>
+        </article>
+
+        <section id="risks" class="risks" aria-labelledby="risks-heading" hidden>
+          <h3 id="risks-heading">Heads up: not everything fits</h3>
+          <ul id="risk-list"></ul>
+          <p id="risk-advice"></p>
+        </section>
+
+        <p id="summary" class="summary"></p>
+
+        <div class="actions">
+          <button type="button" id="replan-btn" class="btn secondary">Re-plan with my progress</button>
+          <button type="button" id="nextday-btn" class="btn secondary">Start next day</button>
+        </div>
+        <p id="progress" class="hint" aria-live="polite"></p>
+
+        <div id="plan" class="plan"></div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <p>StudyPilot runs entirely in your browser. Nothing you enter is sent anywhere.</p>
+    </div>
+  </footer>
+
+  <script src="src/validate.js"></script>
+  <script src="src/engine.js"></script>
+  <script src="src/app.js"></script>
+</body>
+</html>
