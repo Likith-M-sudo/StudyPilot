@@ -64,7 +64,7 @@
   }
 
   /** Short, human-readable reason a topic is scheduled on a given day. */
-  function explain(topic, day) {
+  function explain(topic, day, energy) {
     const reasons = [];
     const daysToExam = topic.daysLeft - day;
     if (daysToExam <= 1) reasons.push('exam is tomorrow or today');
@@ -72,6 +72,8 @@
     if (topic.confidence <= 2) reasons.push('low confidence');
     if (topic.importance >= 4) reasons.push('high exam weight');
     if (topic.difficulty >= 4) reasons.push('hard topic');
+    if (energy === 'low' && topic.difficulty <= 2) reasons.push('lighter work suits your low energy');
+    if (energy === 'high' && topic.difficulty >= 4) reasons.push('high energy is a good fit for this demanding topic');
     return reasons.length ? reasons.join(', ') : 'steady revision';
   }
 
@@ -80,22 +82,30 @@
    * that can no longer be finished if it is skipped today is forced to the
    * front, so a last-chance exam is never starved by higher-priority topics.
    */
-  function dynamicScore(entry, day) {
+  function dynamicScore(entry, day, energy) {
     const daysAvailable = Math.max(1, entry.topic.daysLeft - day);
-    const pace = entry.remaining / daysAvailable; // blocks per day still required
+    const pace = entry.remaining / daysAvailable;
     const urgency = Math.min(pace / MAX_BLOCKS_PER_TOPIC_PER_DAY, 1);
     const mustStudyToday = entry.remaining > (daysAvailable - 1) * MAX_BLOCKS_PER_TOPIC_PER_DAY;
-    return entry.base + URGENCY_WEIGHT * urgency + (mustStudyToday ? FORCED_BONUS : 0);
+    // Energy changes the order of suitable work, never the stated time budget.
+    // Last-chance exam work still takes precedence over this preference.
+    const difficulty = entry.topic.difficulty;
+    const energyFit = energy === 'low'
+      ? (5 - difficulty) * 10
+      : energy === 'high'
+        ? (difficulty - 1) * 10
+        : 0;
+    return entry.base + URGENCY_WEIGHT * urgency + energyFit + (mustStudyToday ? FORCED_BONUS : 0);
   }
 
-  function pickNext(entries, day, usedToday) {
+  function pickNext(entries, day, usedToday, energy) {
     let best = null;
     for (const entry of entries) {
       if (entry.remaining <= 0) continue;
       if (entry.topic.daysLeft <= day) continue; // exam already over
       if ((usedToday.get(entry.topic.name) || 0) >= MAX_BLOCKS_PER_TOPIC_PER_DAY) continue;
 
-      const score = dynamicScore(entry, day);
+      const score = dynamicScore(entry, day, energy);
       const better =
         best === null ||
         score > best.score ||
@@ -132,7 +142,7 @@
       const usedToday = new Map();
       const order = []; // topic names in the order they were first chosen today
       for (let slot = 0; slot < capacity; slot++) {
-        const entry = pickNext(entries, day, usedToday);
+        const entry = pickNext(entries, day, usedToday, context.energy);
         if (!entry) break;
         entry.remaining -= 1;
         entry.planned += 1;
@@ -149,7 +159,7 @@
           difficulty: entry.topic.difficulty,
           daysLeft: entry.topic.daysLeft - day,
           priority: entry.base,
-          reason: explain(entry.topic, day),
+          reason: explain(entry.topic, day, context.energy),
         };
       });
       days.push({

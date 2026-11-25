@@ -36,6 +36,21 @@ test('priorityScore ranks weak, heavy, hard topics highest', () => {
   assert.ok(weak <= 100 && strong >= 0);
 });
 
+
+test('buildPlan adapts topic order to current energy without exceeding the time budget', () => {
+  const topics = [
+    topic({ name: 'Easy', daysLeft: 5, difficulty: 1, confidence: 3, importance: 3 }),
+    topic({ name: 'Hard', daysLeft: 5, difficulty: 5, confidence: 3, importance: 3 }),
+  ];
+  const low = E.buildPlan(topics, { hoursPerDay: 1, energy: 'low' });
+  const high = E.buildPlan(topics, { hoursPerDay: 1, energy: 'high' });
+  assert.equal(low.days[0].sessions[0].topic, 'Easy');
+  assert.equal(high.days[0].sessions[0].topic, 'Hard');
+  low.days.concat(high.days).forEach((day) => assert.ok(day.totalMinutes <= 60));
+  assert.match(low.days[0].sessions[0].reason, /low energy/);
+  assert.match(high.days[0].sessions[0].reason, /high energy/);
+});
+
 test('buildPlan returns an empty plan for no topics', () => {
   const plan = E.buildPlan([], { hoursPerDay: 3 });
   assert.deepEqual(plan.days, []);

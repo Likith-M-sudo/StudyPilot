@@ -94,7 +94,7 @@ npm test        # or: node --test
 
 They cover:
 
-- the engine: time estimates, priority, daily capacity, per-topic caps, exam deadlines, last-chance scheduling, risk flags, energy rules, progress, next-day, determinism and no mutation of inputs
+- the engine: time estimates, priority, daily capacity, per-topic caps, exam deadlines, last-chance scheduling, risk flags, energy-aware topic ordering, progress persistence, next-day, determinism and no mutation of inputs
 - validation: sanitising, ranges, bad types, duplicates, caps, tampered progress
 - the page: labels for every field, unique ids, live regions, CSP rules, no inline code, no unsafe DOM APIs, no secrets, and that every element the UI code looks up exists
 
@@ -136,4 +136,4 @@ tests/              engine, validation and page tests
 
 - No calendar export or notifications yet.
 - Weekends and fixed commitments are not modelled.
-- Confidence ratings are manual; a future version could update them from quiz results.
+- Confidence ratings are manual; a future version could update them from quiz results. Energy changes the order and explanation of suitable sessions without exceeding the student's stated daily time budget. Checked sessions are saved locally so a refresh does not silently discard progress.

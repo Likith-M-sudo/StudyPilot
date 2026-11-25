@@ -61,7 +61,7 @@
     try {
       window.localStorage.setItem(
         STORAGE_KEY,
-        JSON.stringify({ context: state.context, topics: state.topics })
+        JSON.stringify({ context: state.context, topics: state.topics, done: Array.from(state.done) })
       );
     } catch (err) {
       /* Storage may be disabled; the app still works without it. */
@@ -76,6 +76,11 @@
       const context = Validate.validateContext(data && data.context);
       if (context.ok) state.context = context.value;
       state.topics = Validate.cleanTopicList(data && data.topics);
+      state.done = new Set(
+        data && Array.isArray(data.done)
+          ? data.done.filter(function (key) { return typeof key === 'string' && key.length <= 100; }).slice(0, 500)
+          : []
+      );
     } catch (err) {
       state.topics = [];
     }
@@ -274,6 +279,7 @@
             if (box.checked) state.done.add(key);
             else state.done.delete(key);
             updateProgress();
+            save();
             announce((box.checked ? 'Marked done: ' : 'Marked not done: ') + s.topic);
           });
           const swatch = el('span', 'swatch c' + colorIndex(s.topic));
@@ -318,6 +324,13 @@
     }
     state.context = settings.value;
     state.plan = Engine.buildPlan(state.topics, state.context);
+    const validKeys = new Set();
+    state.plan.days.forEach(function (day) {
+      day.sessions.forEach(function (session) {
+        validKeys.add(sessionKey(day.day, session.topic));
+      });
+    });
+    state.done = new Set(Array.from(state.done).filter(function (key) { return validKeys.has(key); }));
     save();
     renderResults();
     if (!options || options.focus !== false) $('results-heading').focus();
