@@ -108,10 +108,23 @@ npm start       # python3 -m http.server 8000, then open http://localhost:8000
 
 It also works as-is on GitHub Pages.
 
+## Deploy to Google Cloud Run
+
+The repo includes a `Dockerfile` (nginx serving the static files) so it deploys straight from source:
+
+```bash
+gcloud config set project YOUR_PROJECT_ID
+gcloud run deploy studypilot --source . --region asia-south1 --allow-unauthenticated
+```
+
+Cloud Run prints the public service URL when the deploy finishes. The container also sends security headers (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`).
+
 ## Project structure
 
 ```
 index.html          page markup
+Dockerfile          container image for Cloud Run
+nginx.conf.template web server config (port and security headers)
 styles.css          styles
 src/validate.js     input validation and sanitising
 src/engine.js       planning and decision logic (pure functions)
